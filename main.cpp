@@ -1,7 +1,3 @@
-// ---------------------------------------------------------------------------
-// main.cpp
-// Application entry point. Ties together the Model, View, and Controller.
-// ---------------------------------------------------------------------------
 #include "splashkit.h"
 #include "rng.h"
 #include "rng.cpp"

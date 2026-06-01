@@ -1,12 +1,6 @@
-// ---------------------------------------------------------------------------
-// enemy.cpp
-// Enemy car implementation.
-// ---------------------------------------------------------------------------
 #include "game_types.cpp"
 #include "rng.h"
 #include <cmath>
-
-// Minimal EnemyCar declaration (headers were removed by user request)
 class EnemyCar
 {
 public:

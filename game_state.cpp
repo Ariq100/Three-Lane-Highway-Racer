@@ -36,6 +36,7 @@ void remove_enemy(GameState &state, int index);
 void handle_collisions(GameState &state);
 bool resolve_impasse(GameState &state);
 void spawn_enemy(GameState &state);
+void apply_player_slipstream_effect(GameState &state);
 
 // ---------------------------------------------------------------------------
 // Traffic Management Functions
@@ -125,9 +126,22 @@ bool can_change_lane(GameState &state, double x, double y, int range_x, int rang
             if (gap_behind < 220.0)
                 return false;
 
-            // Prevent merges where the enemy is slightly ahead and the player would catch up
+            // Prevent merges where the enemy is slightly ahead and the player would catch up.
+            // Allow escaping blockade cars to change lanes immediately once they are ahead.
+            bool escaping_blockade_exemption = false;
+            for (int i = 0; i < state.active_enemies.length(); i++)
+            {
+                EnemyCar &e = state.active_enemies.get(i);
+                if (e.is_escaping_blockade && e.current_lane == x_to_lane(x) &&
+                    std::fabs(e.x_pos - x) < 1.0 && std::fabs(e.y_pos - y) < 1.0)
+                {
+                    escaping_blockade_exemption = true;
+                    break;
+                }
+            }
+
             double gap_ahead = player_top - car_bottom; // positive => player is behind enemy
-            if (gap_ahead >= 0.0 && gap_ahead < 220.0)
+            if (gap_ahead >= 0.0 && gap_ahead < 220.0 && !escaping_blockade_exemption)
                 return false;
         }
     }
@@ -472,6 +486,7 @@ void update_game(GameState &state)
         }
     }
 
+    apply_player_slipstream_effect(state);
     handle_collisions(state);
     bool blockade_cleared = resolve_impasse(state);
     if (blockade_cleared)
@@ -502,6 +517,32 @@ void handle_collisions(GameState &state)
                 save_highscore(HIGHSCORE_JSON, state.high_score);
             }
             return;
+        }
+    }
+}
+
+// Apply slipstream effect: center-lane cars ahead of the player slow down to 50% of player speed.
+// This scales dynamically with the current traffic speed multiplier.
+void apply_player_slipstream_effect(GameState &state)
+{
+    // Calculate the dynamic player speed based on current traffic multiplier
+    double player_speed = 3.5 * state.global_speed_multiplier;
+    double target_speed = player_speed * 0.5;
+
+    for (int i = 0; i < state.active_enemies.length(); i++)
+    {
+        EnemyCar &e = state.active_enemies.get(i);
+
+        // Only affect center-lane cars
+        if (e.current_lane != LANE_CENTER)
+            continue;
+
+        // Check if car is ahead of the player (car's top is above player's bottom, i.e., lower y_pos)
+        bool car_ahead_of_player = (e.get_top() < state.player.get_bottom());
+
+        if (car_ahead_of_player)
+        {
+            e.speed = target_speed;
         }
     }
 }
@@ -752,7 +793,26 @@ bool resolve_impasse(GameState &state)
 
         if (escaping_center->is_overtaking_to_escape)
         {
-            escaping_center->speed = escaping_center->escape_target_speed;
+            // Re-evaluate every frame whether the player is still behind us in center lane.
+            // Once the player has overtaken us or moved out of center, switch to boost speed.
+            Lane player_lane = x_to_lane(state.player.x_pos);
+            bool player_in_center = (player_lane == LANE_CENTER);
+            bool player_behind_center = (state.player.get_top() > escaping_center->get_bottom());
+
+            if (player_in_center && player_behind_center)
+            {
+                // Still blocked by player — hold slow speed so player can pass
+                double player_speed = 3.5 * state.global_speed_multiplier;
+                escaping_center->escape_target_speed = static_cast<float>(player_speed * 0.15);
+                escaping_center->speed = escaping_center->escape_target_speed;
+            }
+            else
+            {
+                // Player has passed or is not in center — boost to overtake the blockers
+                double player_speed = 3.5 * state.global_speed_multiplier;
+                escaping_center->escape_target_speed = static_cast<float>(player_speed * 1.5);
+                escaping_center->speed = escaping_center->escape_target_speed;
+            }
 
             if (has_cleared_blocking_cars(*escaping_center, state, overtake_gap))
             {
@@ -817,9 +877,27 @@ bool resolve_impasse(GameState &state)
                 center_car->original_speed = center_car->speed;
                 center_car->escape_timer = 0;
 
-                double player_speed = 3.5; // player forward speed is not modeled explicitly
-                center_car->escape_target_speed = static_cast<float>(player_speed * 1.5);
-                center_car->speed = center_car->escape_target_speed;
+                // Check if the player is in the center lane and behind this enemy car.
+                // "Behind" means the player's top edge is below the enemy's bottom edge (higher y_pos).
+                Lane player_lane = x_to_lane(state.player.x_pos);
+                bool player_in_center = (player_lane == LANE_CENTER);
+                bool player_behind_center = (state.player.get_top() > center_car->get_bottom());
+
+                if (player_in_center && player_behind_center)
+                {
+                    // Player is directly behind — slow down so the player overtakes us first,
+                    // then we overtake the blockers once the player has passed.
+                    double player_speed = 3.5;
+                    center_car->escape_target_speed = static_cast<float>(player_speed * 0.85);
+                    center_car->speed = center_car->escape_target_speed;
+                }
+                else
+                {
+                    // Player is not behind us in center — safe to boost and overtake normally.
+                    double player_speed = 3.5;
+                    center_car->escape_target_speed = static_cast<float>(player_speed * 1.5);
+                    center_car->speed = center_car->escape_target_speed;
+                }
             }
         }
 

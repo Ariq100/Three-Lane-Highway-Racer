@@ -35,7 +35,7 @@ inline constexpr int LEVEL_3_SCORE = 5000;
 inline constexpr int MAX_ENEMIES = 50;
 
 // Highscore file path (relative to executable)
-inline const char *const HIGHSCORE_JSON = "Resources/highscore.json";
+inline const char *const HIGHSCORE_JSON = "./highscore.json";
 
 // Vehicle dimensions
 inline constexpr int SEDAN_WIDTH = 100;
