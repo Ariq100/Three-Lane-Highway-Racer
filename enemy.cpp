@@ -36,8 +36,10 @@ public:
     double overtake_progress;
     bool is_escaping_blockade;
     double original_speed;
+    int escape_timer;
+    bool is_overtaking_to_escape;
+    float escape_target_speed;
 };
-
 
 // Default constructor
 EnemyCar::EnemyCar()
@@ -56,6 +58,9 @@ EnemyCar::EnemyCar()
     overtake_progress = 0.0;
     is_escaping_blockade = false;
     original_speed = speed;
+    escape_timer = 0;
+    is_overtaking_to_escape = false;
+    escape_target_speed = 0.0f;
 }
 
 // Advance position each frame
@@ -79,7 +84,7 @@ void EnemyCar::update_position(double global_multiplier)
     // Lerp toward target_x
     double diff = target_x - x_pos;
     if (std::fabs(diff) > 2.0)
-        x_pos += diff * 0.08;  // Smooth swerving
+        x_pos += diff * 0.08; // Smooth swerving
     else
         x_pos = target_x;
 }
@@ -95,14 +100,14 @@ int EnemyCar::get_width()
 {
     switch (type)
     {
-        case TRUCK:    
-           return TRUCK_WIDTH;
-        case MINIVAN:     
-            return MINIVAN_WIDTH;
-        case RECKLESS_CAR:
-            return RECKLESS_WIDTH;
-        default:          
-            return SEDAN_WIDTH;
+    case TRUCK:
+        return TRUCK_WIDTH;
+    case MINIVAN:
+        return MINIVAN_WIDTH;
+    case RECKLESS_CAR:
+        return RECKLESS_WIDTH;
+    default:
+        return SEDAN_WIDTH;
     }
 }
 
@@ -110,33 +115,33 @@ int EnemyCar::get_height()
 {
     switch (type)
     {
-        case TRUCK:    
-           return TRUCK_HEIGHT;
-        case MINIVAN:  
-           return MINIVAN_HEIGHT;
-        case RECKLESS_CAR:
-            return RECKLESS_HEIGHT;
-        default:         
-            return SEDAN_HEIGHT;
+    case TRUCK:
+        return TRUCK_HEIGHT;
+    case MINIVAN:
+        return MINIVAN_HEIGHT;
+    case RECKLESS_CAR:
+        return RECKLESS_HEIGHT;
+    default:
+        return SEDAN_HEIGHT;
     }
 }
 
 double EnemyCar::get_left()
 {
-    return x_pos - get_width() / 2.0; 
+    return x_pos - get_width() / 2.0;
 }
 
 double EnemyCar::get_right()
 {
-    return x_pos + get_width() / 2.0; 
+    return x_pos + get_width() / 2.0;
 }
 
 double EnemyCar::get_top()
 {
-    return y_pos; 
+    return y_pos;
 }
 
 double EnemyCar::get_bottom()
 {
-    return y_pos + get_height(); 
+    return y_pos + get_height();
 }

@@ -5,11 +5,12 @@
 #include "splashkit.h"
 #include "game_state.cpp"
 
-void handle_input(GameState& state)
+void handle_input(GameState &state)
 {
     process_events();
 
-    if (quit_requested()) return;
+    if (quit_requested())
+        return;
 
     if (state.phase == START_SCREEN)
     {

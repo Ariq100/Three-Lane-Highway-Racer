@@ -3,27 +3,26 @@
 
 #include "splashkit.h"
 
-
 // Screen dimensions
-inline constexpr int WINDOW_WIDTH  = 800;
-inline constexpr int WINDOW_HEIGHT = 600;
+inline constexpr int WINDOW_WIDTH = 1000;
+inline constexpr int WINDOW_HEIGHT = 1000;
 
 // Road / lane geometry (centred inside the window)
-inline constexpr int ROAD_LEFT     = 150;   
-inline constexpr int ROAD_RIGHT    = 650;   
-inline constexpr int ROAD_WIDTH    = ROAD_RIGHT - ROAD_LEFT;   
+inline constexpr int ROAD_LEFT = 150;
+inline constexpr int ROAD_RIGHT = 650;
+inline constexpr int ROAD_WIDTH = ROAD_RIGHT - ROAD_LEFT;
 
-inline constexpr int LANE_WIDTH    = ROAD_WIDTH / 3;           
+inline constexpr int LANE_WIDTH = ROAD_WIDTH / 3;
 
 // Lane centre X positions (kept for legacy but lane_to_x is canonical)
-inline constexpr int LANE_CENTER_LEFT   = ROAD_LEFT + LANE_WIDTH / 2;          
-inline constexpr int LANE_CENTER_CENTER = ROAD_LEFT + LANE_WIDTH + LANE_WIDTH / 2; 
-inline constexpr int LANE_CENTER_RIGHT  = ROAD_LEFT + 2 * LANE_WIDTH + LANE_WIDTH / 2; 
+inline constexpr int LANE_CENTER_LEFT = ROAD_LEFT + LANE_WIDTH / 2;
+inline constexpr int LANE_CENTER_CENTER = ROAD_LEFT + LANE_WIDTH + LANE_WIDTH / 2;
+inline constexpr int LANE_CENTER_RIGHT = ROAD_LEFT + 2 * LANE_WIDTH + LANE_WIDTH / 2;
 
 // Player car pixel dimensions
-inline constexpr int PLAYER_CAR_WIDTH  = 124;
+inline constexpr int PLAYER_CAR_WIDTH = 124;
 inline constexpr int PLAYER_CAR_HEIGHT = 126;
-inline constexpr double PLAYER_Y       = WINDOW_HEIGHT - 130.0;
+inline constexpr double PLAYER_Y = WINDOW_HEIGHT - 130.0;
 
 // Lane-switch speed (px/frame the player interpolates toward target lane)
 inline constexpr double LANE_LERP_SPEED = 12.0;
@@ -33,10 +32,10 @@ inline constexpr int LEVEL_2_SCORE = 1200;
 inline constexpr int LEVEL_3_SCORE = 5000;
 
 // Maximum number of enemy cars on screen at once
-inline constexpr int MAX_ENEMIES = 30;
+inline constexpr int MAX_ENEMIES = 50;
 
 // Highscore file path (relative to executable)
-inline const char* const HIGHSCORE_JSON = "Resources/highscore.json";
+inline const char *const HIGHSCORE_JSON = "Resources/highscore.json";
 
 // Vehicle dimensions
 inline constexpr int SEDAN_WIDTH = 100;
@@ -51,7 +50,7 @@ inline constexpr int RECKLESS_HEIGHT = 55;
 // Spawn and blockade parameters
 inline constexpr int MIN_SPAWN_DELAY = 60;
 inline constexpr int MAX_SPAWN_DELAY = 120;
-inline constexpr int MIN_LANE_DISTANCE = 150;      // Distance between cars in same lane
+inline constexpr int MIN_LANE_DISTANCE = 150;       // Distance between cars in same lane
 inline constexpr int BLOCKADE_CHECK_DISTANCE = 150; // For 3-lane blockade detection
 
 enum GamePhase
@@ -63,9 +62,9 @@ enum GamePhase
 
 enum Lane
 {
-    LANE_LEFT   = 0,
+    LANE_LEFT = 0,
     LANE_CENTER = 1,
-    LANE_RIGHT  = 2
+    LANE_RIGHT = 2
 };
 
 enum VehicleType

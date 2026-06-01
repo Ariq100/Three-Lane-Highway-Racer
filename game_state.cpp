@@ -82,12 +82,55 @@ int can_spawn_in_lane(GameState &state, Lane lane, double *out_speed)
 // Check if a car can safely change lanes
 // Parameters: x, y = current position, range_x, range_y = dimensions, target_lane = where it wants to go
 // Returns: true if safe to change, false if would collide
+Lane x_to_lane(double x_pos)
+{
+    double dist_left = std::fabs(x_pos - lane_to_x(LANE_LEFT));
+    double dist_center = std::fabs(x_pos - lane_to_x(LANE_CENTER));
+    double dist_right = std::fabs(x_pos - lane_to_x(LANE_RIGHT));
+
+    if (dist_left <= dist_center && dist_left <= dist_right)
+        return LANE_LEFT;
+    if (dist_right <= dist_center && dist_right <= dist_left)
+        return LANE_RIGHT;
+    return LANE_CENTER;
+}
+
 bool can_change_lane(GameState &state, double x, double y, int range_x, int range_y, Lane target_lane)
 {
     double car_left = x - range_x / 2.0;
     double car_right = x + range_x / 2.0;
     double car_top = y;
     double car_bottom = y + range_y;
+
+    // Block the lane change if it would move into the player's lane and overlap the player.
+    {
+        double target_x = lane_to_x(target_lane);
+        double player_lane_x = lane_to_x(x_to_lane(state.player.x_pos));
+        bool enters_player_lane = (std::fabs(target_x - player_lane_x) < 1.0);
+
+        if (enters_player_lane)
+        {
+            double player_left = state.player.get_left();
+            double player_right = state.player.get_right();
+            double player_top = state.player.get_top();
+            double player_bottom = state.player.get_bottom();
+
+            bool overlap_x = (car_right > player_left) && (car_left < player_right);
+            bool overlap_y = (car_bottom > player_top) && (car_top < player_bottom);
+            if (overlap_x && overlap_y)
+                return false;
+
+            // Prevent merges where the enemy would be too close behind the player
+            double gap_behind = car_top - player_bottom; // positive => enemy is below (behind) the player
+            if (gap_behind < 220.0)
+                return false;
+
+            // Prevent merges where the enemy is slightly ahead and the player would catch up
+            double gap_ahead = player_top - car_bottom; // positive => player is behind enemy
+            if (gap_ahead >= 0.0 && gap_ahead < 220.0)
+                return false;
+        }
+    }
 
     // Check all cars in the target lane
     for (int i = 0; i < state.active_enemies.length(); i++)
@@ -467,6 +510,50 @@ void handle_collisions(GameState &state)
 // Enemy Spawning and Management
 // ---------------------------------------------------------------------------
 
+static bool would_converge_into_blockade(GameState &state, Lane new_lane, double new_speed)
+{
+    const double CONVERGENCE_ZONE = PLAYER_CAR_HEIGHT * 4.0;
+    double front_y[3] = {-1e9, -1e9, -1e9};
+    double front_speed[3] = {0.0, 0.0, 0.0};
+    bool has_car[3] = {false, false, false};
+
+    for (int i = 0; i < state.active_enemies.length(); i++)
+    {
+        EnemyCar &e = state.active_enemies.get(i);
+        int li = static_cast<int>(e.current_lane);
+
+        if (!has_car[li] || e.y_pos > front_y[li])
+        {
+            front_y[li] = e.y_pos;
+            front_speed[li] = e.speed;
+            has_car[li] = true;
+        }
+    }
+
+    int nl = static_cast<int>(new_lane);
+    has_car[nl] = true;
+    front_speed[nl] = new_speed;
+    double simulated_front = -new_speed * 60.0;
+    front_y[nl] = (front_y[nl] > simulated_front ? front_y[nl] : simulated_front);
+
+    if (!has_car[0] || !has_car[1] || !has_car[2])
+        return false;
+
+    int pairs[2][2] = {{0, 1}, {1, 2}};
+    for (int pair_index = 0; pair_index < 2; pair_index++)
+    {
+        int a = pairs[pair_index][0];
+        int b = pairs[pair_index][1];
+        double y_diff = std::fabs(front_y[a] - front_y[b]);
+        double spd_diff = std::fabs(front_speed[a] - front_speed[b]);
+
+        if (y_diff < CONVERGENCE_ZONE && spd_diff < 0.5)
+            return true;
+    }
+
+    return false;
+}
+
 void spawn_enemy(GameState &state)
 {
     if (state.active_enemies.length() >= state.active_enemies.capacity())
@@ -547,6 +634,12 @@ void spawn_enemy(GameState &state)
                 continue;
             }
 
+            if (would_converge_into_blockade(state, chosen_lane, new_enemy.speed))
+            {
+                attempts++;
+                continue;
+            }
+
             // If other two lanes both have a recent top car, enforce SAFE_WEAVE_GAP
             int a = (chosen_lane + 1) % 3;
             int b = (chosen_lane + 2) % 3;
@@ -595,6 +688,11 @@ void spawn_enemy(GameState &state)
 
             if (can_spawn_result > 0 && prevent_3lane_blockade(state, try_lane, new_enemy.get_width(), new_enemy.get_height()))
             {
+                if (would_converge_into_blockade(state, try_lane, new_enemy.speed))
+                {
+                    continue;
+                }
+
                 // If single car already there, ensure speed <= followed car
                 if (can_spawn_result == 2)
                 {
@@ -650,13 +748,55 @@ bool resolve_impasse(GameState &state)
 
     if (escaping_center != nullptr)
     {
-        if (has_cleared_blocking_cars(*escaping_center, state, overtake_gap))
+        escaping_center->escape_timer++;
+
+        if (escaping_center->is_overtaking_to_escape)
         {
-            if (attempt_lane_change_for_blocked_car(state, *escaping_center))
+            escaping_center->speed = escaping_center->escape_target_speed;
+
+            if (has_cleared_blocking_cars(*escaping_center, state, overtake_gap))
             {
-                escaping_center->is_escaping_blockade = false;
-                return true;
+                escaping_center->is_overtaking_to_escape = false;
             }
+            return false;
+        }
+
+        if (attempt_lane_change_for_blocked_car(state, *escaping_center))
+        {
+            double matched_speed = 0.0;
+            bool found_match = false;
+            for (int i = 0; i < state.active_enemies.length(); i++)
+            {
+                EnemyCar &other = state.active_enemies.get(i);
+                if (&other == escaping_center)
+                    continue;
+                if (other.current_lane == escaping_center->current_lane)
+                {
+                    matched_speed = other.speed;
+                    found_match = true;
+                    break;
+                }
+            }
+
+            escaping_center->speed = found_match ? matched_speed
+                                                 : escaping_center->original_speed * 0.15;
+            escaping_center->is_escaping_blockade = false;
+            escaping_center->is_overtaking_to_escape = false;
+            escaping_center->escape_timer = 0;
+            return true;
+        }
+
+        if (escaping_center->escape_timer > 300)
+        {
+            escaping_center->current_lane = (escaping_center->current_lane == LANE_CENTER)
+                                                ? LANE_LEFT
+                                                : escaping_center->current_lane;
+            escaping_center->target_x = lane_to_x(escaping_center->current_lane);
+            escaping_center->speed = escaping_center->original_speed * 1.5;
+            escaping_center->is_escaping_blockade = false;
+            escaping_center->is_overtaking_to_escape = false;
+            escaping_center->escape_timer = 0;
+            return true;
         }
 
         return false;
@@ -673,8 +813,13 @@ bool resolve_impasse(GameState &state)
             if (!center_car->is_escaping_blockade)
             {
                 center_car->is_escaping_blockade = true;
+                center_car->is_overtaking_to_escape = true;
                 center_car->original_speed = center_car->speed;
-                center_car->speed = center_car->original_speed * 0.8;
+                center_car->escape_timer = 0;
+
+                double player_speed = 3.5; // player forward speed is not modeled explicitly
+                center_car->escape_target_speed = static_cast<float>(player_speed * 1.5);
+                center_car->speed = center_car->escape_target_speed;
             }
         }
 
