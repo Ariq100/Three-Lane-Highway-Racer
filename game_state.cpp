@@ -205,8 +205,15 @@ EnemyCar *find_closest_car_in_lane(GameState &state, Lane lane)
 // Return the speed of the car in a lane closest to a given Y coordinate.
 double lane_speed_for_reference(GameState &state, Lane lane, double ref_y, double fallback_speed)
 {
-    EnemyCar *best = nullptr;
-    double best_distance = 1000000000.0;
+    // Prefer the car that is directly ahead of ref_y in this lane —
+    // i.e. the car with the highest y_pos that is still less than ref_y
+    // (lower on screen = further ahead in the direction of travel).
+    // If no car is ahead, fall back to the closest car behind.
+    EnemyCar *best_ahead  = nullptr;
+    double    best_ahead_y = -1000000000.0; // want the largest y that is still < ref_y
+
+    EnemyCar *best_behind = nullptr;
+    double    best_behind_dist = 1000000000.0;
 
     for (int i = 0; i < state.active_enemies.length(); i++)
     {
@@ -214,15 +221,32 @@ double lane_speed_for_reference(GameState &state, Lane lane, double ref_y, doubl
         if (enemy.current_lane != lane)
             continue;
 
-        double distance = std::fabs(enemy.y_pos - ref_y);
-        if (distance < best_distance)
+        if (enemy.y_pos < ref_y)
         {
-            best_distance = distance;
-            best = &enemy;
+            double ahead_y = enemy.y_pos;
+            if (best_ahead == nullptr || ahead_y > best_ahead_y)
+            {
+                best_ahead_y = ahead_y;
+                best_ahead = &enemy;
+            }
+        }
+        else
+        {
+            // Car is behind reference position — keep as fallback
+            double dist = enemy.y_pos - ref_y;
+            if (dist < best_behind_dist)
+            {
+                best_behind_dist = dist;
+                best_behind = &enemy;
+            }
         }
     }
 
-    return best ? best->speed : fallback_speed;
+    if (best_ahead != nullptr)
+        return best_ahead->speed;
+    if (best_behind != nullptr)
+        return best_behind->speed;
+    return fallback_speed;
 }
 
 // A blocking car can slow down only if there is another car below it in the same lane.
@@ -308,7 +332,7 @@ bool find_blocking_side_cars_for_center(EnemyCar &center, GameState &state, doub
         }
     }
 
-    return left_blocker != nullptr || right_blocker != nullptr;
+    return left_blocker != nullptr && right_blocker != nullptr;
 }
 
 bool find_blocked_center_car(GameState &state, double gap, EnemyCar *&center_car, EnemyCar *&left_blocker, EnemyCar *&right_blocker)
@@ -881,7 +905,7 @@ bool resolve_impasse(GameState &state)
         {
             escaping_center->current_lane = (escaping_center->current_lane == LANE_CENTER) ? LANE_LEFT : escaping_center->current_lane;
             escaping_center->target_x = lane_to_x(escaping_center->current_lane);
-            escaping_center->speed = escaping_center->original_speed * 1.5;
+            escaping_center->speed = escaping_center->original_speed * 1.5 * state.global_speed_multiplier;
             escaping_center->is_escaping_blockade = false;
             escaping_center->is_overtaking_to_escape = false;
             escaping_center->escape_timer = 0;
