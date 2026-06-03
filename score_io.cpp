@@ -1,6 +1,5 @@
 #include "splashkit.h"
 #include <string>
-#include "rng.h"
 
 int load_highscore(const std::string &filepath)
 {

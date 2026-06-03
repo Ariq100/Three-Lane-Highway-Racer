@@ -1,57 +1,56 @@
-#ifndef GAME_TYPES_CPP_INCLUDED
-#define GAME_TYPES_CPP_INCLUDED
+#ifndef GAME_TYPES_HPP_INCLUDED
+#define GAME_TYPES_HPP_INCLUDED
 
 #include "splashkit.h"
 
 // Screen dimensions
-inline constexpr int WINDOW_WIDTH = 1000;
-inline constexpr int WINDOW_HEIGHT = 1000;
+const int WINDOW_WIDTH = 1000;
+const int WINDOW_HEIGHT = 1000;
 
-// Road / lane geometry (centred inside the window)
-inline constexpr int ROAD_LEFT = 150;
-inline constexpr int ROAD_RIGHT = 650;
-inline constexpr int ROAD_WIDTH = ROAD_RIGHT - ROAD_LEFT;
+// Road/lane geometry (centred inside the window)
+const int ROAD_LEFT = 150;
+const int ROAD_RIGHT = 650;
+const int ROAD_WIDTH = ROAD_RIGHT - ROAD_LEFT;
 
-inline constexpr int LANE_WIDTH = ROAD_WIDTH / 3;
+const int LANE_WIDTH = ROAD_WIDTH / 3;
 
-// Lane centre X positions (kept for legacy but lane_to_x is canonical)
-inline constexpr int LANE_CENTER_LEFT = ROAD_LEFT + LANE_WIDTH / 2;
-inline constexpr int LANE_CENTER_CENTER = ROAD_LEFT + LANE_WIDTH + LANE_WIDTH / 2;
-inline constexpr int LANE_CENTER_RIGHT = ROAD_LEFT + 2 * LANE_WIDTH + LANE_WIDTH / 2;
+// const int LANE_CENTER_LEFT = ROAD_LEFT + LANE_WIDTH / 2;
+// const int LANE_CENTER_CENTER = ROAD_LEFT + LANE_WIDTH + LANE_WIDTH / 2;
+// const int LANE_CENTER_RIGHT = ROAD_LEFT + 2 * LANE_WIDTH + LANE_WIDTH / 2;
 
 // Player car pixel dimensions
-inline constexpr int PLAYER_CAR_WIDTH = 124;
-inline constexpr int PLAYER_CAR_HEIGHT = 126;
-inline constexpr double PLAYER_Y = WINDOW_HEIGHT - 130.0;
+const int PLAYER_CAR_WIDTH = 124;
+const int PLAYER_CAR_HEIGHT = 126;
+const double PLAYER_Y = WINDOW_HEIGHT - 150.0; // players position on the screen
 
-// Lane-switch speed (px/frame the player interpolates toward target lane)
-inline constexpr double LANE_LERP_SPEED = 12.0;
+// Lane-switch speed
+const double LANE_LERP_SPEED = 12.0;
 
 // Difficulty score thresholds
-inline constexpr int LEVEL_2_SCORE = 1200;
-inline constexpr int LEVEL_3_SCORE = 5000;
+const int LEVEL_2_SCORE = 1200;
+const int LEVEL_3_SCORE = 3000;
 
 // Maximum number of enemy cars on screen at once
-inline constexpr int MAX_ENEMIES = 50;
+const int MAX_ENEMIES = 50;
 
 // Highscore file path (relative to executable)
-inline const char *const HIGHSCORE_JSON = "./highscore.json";
+const char *const HIGHSCORE_JSON = "./highscore.json";
 
 // Vehicle dimensions
-inline constexpr int SEDAN_WIDTH = 100;
-inline constexpr int SEDAN_HEIGHT = 60;
-inline constexpr int TRUCK_WIDTH = 140;
-inline constexpr int TRUCK_HEIGHT = 80;
-inline constexpr int MINIVAN_WIDTH = 110;
-inline constexpr int MINIVAN_HEIGHT = 65;
-inline constexpr int RECKLESS_WIDTH = 90;
-inline constexpr int RECKLESS_HEIGHT = 55;
+const int SEDAN_WIDTH = 120;
+const int SEDAN_HEIGHT = 120;
+const int TRUCK_WIDTH = 140;
+const int TRUCK_HEIGHT = 140;
+const int MINIVAN_WIDTH = 124;
+const int MINIVAN_HEIGHT = 133;
+// const int RECKLESS_WIDTH = 90;
+// const int RECKLESS_HEIGHT = 55;
 
 // Spawn and blockade parameters
-inline constexpr int MIN_SPAWN_DELAY = 60;
-inline constexpr int MAX_SPAWN_DELAY = 120;
-inline constexpr int MIN_LANE_DISTANCE = 150;       // Distance between cars in same lane
-inline constexpr int BLOCKADE_CHECK_DISTANCE = 150; // For 3-lane blockade detection
+const int MIN_SPAWN_DELAY = 50;
+const int MAX_SPAWN_DELAY = 80;
+const int MIN_LANE_DISTANCE = 150;       // Distance between cars in same lane
+const int BLOCKADE_CHECK_DISTANCE = 150; // For 3-lane blockade detection
 
 enum GamePhase
 {
@@ -83,7 +82,7 @@ enum BehaviorType
 };
 
 // Safe weave distance (player needs this vertical gap to weave diagonally)
-inline constexpr int SAFE_WEAVE_GAP = PLAYER_CAR_HEIGHT * 2; // e.g., 2x player height
+const int SAFE_WEAVE_GAP = PLAYER_CAR_HEIGHT * 2;
 
 // Convert a lane enum to an X coordinate on screen, centered regardless of WINDOW_WIDTH
 double lane_to_x(Lane lane)
@@ -94,4 +93,4 @@ double lane_to_x(Lane lane)
     return road_left + lane_w * static_cast<int>(lane) + lane_w / 2.0;
 }
 
-#endif // GAME_TYPES_CPP_INCLUDED
+#endif

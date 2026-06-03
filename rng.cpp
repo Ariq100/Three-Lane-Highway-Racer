@@ -1,6 +1,5 @@
 #include "rng.h"
 
-
 int random_int(int min, int max)
 {
     return min + rnd(max - min + 1);

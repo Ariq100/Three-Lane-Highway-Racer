@@ -1,10 +1,7 @@
-// ---------------------------------------------------------------------------
-// renderer.cpp
-// Rendering and graphics implementation.
-// ---------------------------------------------------------------------------
 #include "splashkit.h"
 #include "game_state.cpp"
 #include <string>
+using std::string;
 
 // Forward declarations (functions defined later in this file)
 void draw_road(GameState &state);
@@ -32,7 +29,7 @@ void init_renderer()
     truck_bitmap = load_bitmap("truck", "Resources/images/truck.png");
     minivan_bitmap = load_bitmap("minivan", "Resources/images/minivan.png");
     sedan_bitmap = load_bitmap("sedan", "Resources/images/sedan.png");
-    reckless_bitmap = load_bitmap("reckless", "Resources/images/reckless_car.png");
+    // reckless_bitmap = load_bitmap("reckless", "Resources/images/reckless_car.png");
 }
 
 void cleanup_renderer()
@@ -41,7 +38,7 @@ void cleanup_renderer()
     free_bitmap(truck_bitmap);
     free_bitmap(minivan_bitmap);
     free_bitmap(sedan_bitmap);
-    free_bitmap(reckless_bitmap);
+    // free_bitmap(reckless_bitmap);
 }
 
 void draw_game(GameState &state)
@@ -67,20 +64,20 @@ void draw_game(GameState &state)
         }
     }
 
-    refresh_screen(60);
+    refresh_screen(100);
 }
 
 void draw_road(GameState &state)
 {
     // Compute centered road coordinates based on current window width
-    double road_w = static_cast<double>(ROAD_WIDTH);
-    double road_left = (static_cast<double>(WINDOW_WIDTH) - road_w) / 2.0;
+    double road_w = ROAD_WIDTH;
+    double road_left = (WINDOW_WIDTH - road_w) / 2.0;
     double road_right = road_left + road_w;
 
-    fill_rectangle(COLOR_GREEN, 0, 0, static_cast<int>(road_left), WINDOW_HEIGHT);
-    fill_rectangle(COLOR_GREEN, static_cast<int>(road_right), 0, WINDOW_WIDTH - static_cast<int>(road_right), WINDOW_HEIGHT);
+    fill_rectangle(COLOR_GREEN, 0, 0, road_left, WINDOW_HEIGHT);
+    fill_rectangle(COLOR_GREEN, road_right, 0, WINDOW_WIDTH - road_right, WINDOW_HEIGHT);
 
-    fill_rectangle(COLOR_DIM_GRAY, static_cast<int>(road_left), 0, static_cast<int>(road_w), WINDOW_HEIGHT);
+    fill_rectangle(COLOR_DIM_GRAY, road_left, 0, road_w, WINDOW_HEIGHT);
 
     if (state.phase == PLAYING)
     {
@@ -92,8 +89,8 @@ void draw_road(GameState &state)
     double lane_w = road_w / 3.0;
     for (int y = -40; y < WINDOW_HEIGHT; y += 40)
     {
-        fill_rectangle(COLOR_WHITE, static_cast<int>(road_left + lane_w - 2), y + road_offset_y, 4, 20);
-        fill_rectangle(COLOR_WHITE, static_cast<int>(road_left + 2 * lane_w - 2), y + road_offset_y, 4, 20);
+        fill_rectangle(COLOR_WHITE, road_left + lane_w - 2, y + road_offset_y, 4, 20);
+        fill_rectangle(COLOR_WHITE, road_left + 2 * lane_w - 2, y + road_offset_y, 4, 20);
     }
 }
 
@@ -108,53 +105,54 @@ void draw_enemies(GameState &state)
 {
     for (int i = 0; i < state.active_enemies.length(); i++)
     {
-        EnemyCar &e = state.active_enemies.get(i);
-        bitmap bmp;
+        EnemyCar &e_car = state.active_enemies.get(i);
+        bitmap vehicle;
 
-        switch (e.type)
+        switch (e_car.type)
         {
         case TRUCK:
-            bmp = truck_bitmap;
+            vehicle = truck_bitmap;
             break;
         case MINIVAN:
-            bmp = minivan_bitmap;
+            vehicle = minivan_bitmap;
             break;
         case SEDAN:
-            bmp = sedan_bitmap;
+            vehicle = sedan_bitmap;
             break;
         case RECKLESS_CAR:
-            bmp = reckless_bitmap;
+            vehicle = reckless_bitmap;
             break;
         default:
-            bmp = sedan_bitmap;
+            vehicle = sedan_bitmap;
             break;
         }
 
-        double draw_x = e.x_pos - bitmap_width(bmp) / 2.0;
-        double draw_y = e.y_pos;
-        draw_bitmap(bmp, draw_x, draw_y);
+        double draw_x = e_car.x_pos - bitmap_width(vehicle) / 2.0;
+        double draw_y = e_car.y_pos;
+        draw_bitmap(vehicle, draw_x, draw_y);
     }
 }
 
 void draw_start_screen(GameState &state)
 {
-    draw_text("THREE-LANE HIGHWAY", COLOR_WHITE, 150, 200);
-    draw_text("High Score: " + std::to_string(state.high_score), COLOR_YELLOW, 320, 260);
+    fill_rectangle(rgba_color(64, 64, 64, 150) , 100, 100, 500, 500);
+    draw_text("THREE-LANE ARCADE HIGHWAY RACER", COLOR_WHITE, 150, 200);
+    draw_text("High Score: " + to_string(state.high_score), COLOR_YELLOW, 320, 260);
     draw_text("Press SPACE to Start", COLOR_WHITE, 300, 320);
-    draw_text("Controls: LEFT / RIGHT Arrows", COLOR_LIGHT_GRAY, 280, 360);
+    draw_text("Controls: LEFT / RIGHT Arrows", COLOR_WHITE, 280, 360);
 }
 
 void draw_hud(GameState &state)
 {
     fill_rectangle(rgba_color(0, 0, 0, 150), 10, 10, 150, 60);
-    draw_text("Score: " + std::to_string(state.score), COLOR_WHITE, 20, 20);
-    draw_text("High: " + std::to_string(state.high_score), COLOR_YELLOW, 20, 40);
+    draw_text("Score: " + to_string(state.score), COLOR_WHITE, 20, 20);
+    draw_text("High: " + to_string(state.high_score), COLOR_YELLOW, 20, 40);
 }
 
 void draw_game_over(GameState &state)
 {
     fill_rectangle(rgba_color(0, 0, 0, 200), 0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-    draw_text("CRASHED!", COLOR_RED, 250, 200);
-    draw_text("Final Score: " + std::to_string(state.score), COLOR_WHITE, 300, 280);
+    draw_text("CRASHED!", COLOR_DARK_RED, 250, 200);
+    draw_text("Final Score: " + to_string(state.score), COLOR_WHITE, 300, 280);
     draw_text("Press SPACE to Restart", COLOR_WHITE, 280, 330);
 }

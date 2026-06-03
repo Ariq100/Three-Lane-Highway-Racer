@@ -1,6 +1,5 @@
 #include "splashkit.h"
 #include "rng.h"
-#include "rng.cpp"
 #include "score_io.cpp"
 #include "renderer.cpp"
 #include "input_handler.cpp"

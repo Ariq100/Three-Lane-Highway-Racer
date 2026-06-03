@@ -1,7 +1,3 @@
-// ---------------------------------------------------------------------------
-// rng.h
-// Random number generation utilities.
-// ---------------------------------------------------------------------------
 #include "splashkit.h"
 
 // Returns a random integer between min and max (inclusive)
