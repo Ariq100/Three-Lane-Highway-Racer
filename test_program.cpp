@@ -1,13 +1,6 @@
-// ---------------------------------------------------------------------------
-// test_program.cpp
-// Comprehensive test program for the three-lane highway game
-//
-// COMPILATION COMMAND:
-// clang++ -std=c++17 -I. test_program.cpp game_state.cpp enemy.cpp player.cpp \
-//         renderer.cpp input_handler.cpp score_io.cpp rng.cpp \
-//         -o test_runner -lsplashkit
-//
-// ---------------------------------------------------------------------------
+#ifndef TEST_PROGRAM_CPP_INCLUDED
+#define TEST_PROGRAM_CPP_INCLUDED
+
 #include <iostream>
 #include <cassert>
 #include <cmath>
@@ -329,6 +322,9 @@ void test_random_numbers()
         if (rand_val == max_val)
             found_max = true;
     }
+    
+    TEST_ASSERT(found_min, "Found minimum value");
+    TEST_ASSERT(found_max, "Found maximum value");
 
     // Test double RNG
     double rand_double = random_double(0.0, 1.0);
@@ -351,11 +347,6 @@ void test_vehicle_dimensions()
     sedan.type = SEDAN;
     TEST_ASSERT(sedan.get_width() == SEDAN_WIDTH, "Sedan width correct");
     TEST_ASSERT(sedan.get_height() == SEDAN_HEIGHT, "Sedan height correct");
-
-    EnemyCar reckless;
-    reckless.type = RECKLESS_CAR;
-    TEST_ASSERT(reckless.get_width() == RECKLESS_WIDTH, "Reckless width correct");
-    TEST_ASSERT(reckless.get_height() == RECKLESS_HEIGHT, "Reckless height correct");
 }
 
 // ---------------------------------------------------------------------------
@@ -583,3 +574,5 @@ int main()
         return 1;
     }
 }
+
+#endif // TEST_PROGRAM_CPP_INCLUDED

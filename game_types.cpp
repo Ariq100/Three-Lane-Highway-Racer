@@ -47,10 +47,10 @@ const int MINIVAN_HEIGHT = 133;
 // const int RECKLESS_HEIGHT = 55;
 
 // Spawn and blockade parameters
-const int MIN_SPAWN_DELAY = 50;
-const int MAX_SPAWN_DELAY = 80;
-const int MIN_LANE_DISTANCE = 150;       // Distance between cars in same lane
-const int BLOCKADE_CHECK_DISTANCE = 150; // For 3-lane blockade detection
+const int MIN_SPAWN_DELAY = 60;
+const int MAX_SPAWN_DELAY = 120;
+const int MIN_LANE_DISTANCE = 200;       // Distance between cars in same lane
+const int BLOCKADE_CHECK_DISTANCE = 200; // For 3-lane blockade detection
 
 enum GamePhase
 {

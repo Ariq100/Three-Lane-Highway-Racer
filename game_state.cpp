@@ -692,6 +692,10 @@ void spawn_enemy(GameState &state)
         new_enemy.behavior_type = OVERTAKING;
         new_enemy.speed = 3.95;
         break;
+    case RECKLESS_CAR:
+        new_enemy.behavior_type = RECKLESS;
+        new_enemy.speed = 4.5;
+        break;
     }
 
     // Compute the top-most (newest/top) car Y for each lane to implement SAFE_WEAVE_GAP
@@ -940,13 +944,13 @@ bool resolve_impasse(GameState &state)
                 {
                     // Player is directly behind — slow down
                     // then we overtake the blockers
-                    center_car->escape_target_speed = 3.5 * state.global_speed_multiplier * 0.001;
+                    center_car->escape_target_speed = 3.5 * state.global_speed_multiplier * 0.0005;
                     center_car->speed = center_car->escape_target_speed;
                 }
                 else
                 {
                     // Player is not behind us in center — safe to slow down and overtake
-                    center_car->escape_target_speed = 3.5 * 2 * state.global_speed_multiplier;
+                    center_car->escape_target_speed = 3.5 * 1.5 * state.global_speed_multiplier;
                     center_car->speed = center_car->escape_target_speed;
                 }
             }
