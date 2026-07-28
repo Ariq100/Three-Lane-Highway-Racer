@@ -114,6 +114,12 @@ The test suite covers:
 
 ---
 
+## Academic Context
+
+This game was built as the final assessment for **FIT1045 — Introduction to Programming** at Monash University. It achieved a raw mark of **90% (High Distinction)**.
+
+---
+
 ## License
 
 This project was created as a university assessment submission.
